@@ -1,9 +1,7 @@
-#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <unistd.h>
 
 #define SIZE (1000*1000*1000)
 #define MEMCPY ft_memcpy
@@ -31,45 +29,36 @@ void *ft_memcpy(void *dst, const void *src, size_t n)
 	return (orig_dst);
 }
 
-void test_memcpy(void *dst, void *src, size_t size)
+void	test_cpy(size_t size, size_t dshift, size_t sshift)
 {
+	void	*dst;
+	void	*src;
 	size_t	before;
 	size_t	after;
 
-	before = clock();
-	MEMCPY(dst, src, size);
-	after = clock();
-	printf("Both aligned: %zu, res: %d, word_size: %zu\n", after - before, memcmp(dst, src, size), sizeof(word));
+	dst = malloc(size + 100);
+	src = malloc(size + 100);
+	memset(dst, 0x00, size + 100);
+	memset(src, 0x00, size + 100);
+	//*(unsigned char *)dst = 0;
+	//*(unsigned char *)src = 0;
 
 	before = clock();
-	MEMCPY(((unsigned char *)dst) + 3, src, size);
+	MEMCPY(((unsigned char *)dst) + dshift, ((unsigned char *)src) + sshift, size);
 	after = clock();
-	printf("Src aligned: %zu, res: %d, word_size: %zu\n", after - before, memcmp(((unsigned char *)dst) + 3, src, size), sizeof(word));
-
-	before = clock();
-	MEMCPY(dst, ((unsigned char *)src) + 3, size);
-	after = clock();
-	printf("Dst aligned: %zu, res: %d, word_size: %zu\n", after - before, memcmp(dst, ((unsigned char *)src) + 3, size), sizeof(word));
-
-	before = clock();
-	MEMCPY(((unsigned char *)dst) + 2, ((unsigned char *)src) + 3, size);
-	after = clock();
-	printf("Both non-aligned: %zu, res: %d, word_size: %zu\n", after - before, memcmp(((unsigned char *)dst) + 2, ((unsigned char *)src) + 3, size), sizeof(word));
+	printf("dshift: %zu, sshift: %zu, time: %zu, res: %d, word_size: %zu\n",
+		dshift, sshift, after - before,
+		memcmp(((unsigned char *)dst) + dshift, ((unsigned char *)src) + sshift, size),
+		sizeof(word));
+	free(dst);
+	free(src);
 }
 
 int main()
 {
-	int 	fd;
-	void	*dst;
-	void	*src;
-
-	fd = open("/dev/random", O_RDONLY);
-	dst = malloc(SIZE + 100);
-	src = malloc(SIZE + 100);
-	read(fd, src, SIZE + 100);
-	close(fd);
-	test_memcpy(dst, src, SIZE);
-	free(src);
-	free(dst);
+	test_cpy(SIZE, 0, 0);
+	test_cpy(SIZE, 3, 0);
+	test_cpy(SIZE, 0, 3);
+	test_cpy(SIZE, 2, 3);
 	return (0);
 }
